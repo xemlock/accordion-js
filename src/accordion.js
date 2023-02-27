@@ -244,7 +244,7 @@
        * @param {boolean} calcHeight = calculate the height of the panel
        */
       showElement(element, calcHeight = true) {
-        const { panelClass, activeClass, collapse, beforeOpen } = this.options;
+        const { panelClass, activeClass, collapse, beforeOpen, onOpen } = this.options;
         if (calcHeight) beforeOpen(element);
 
         const panel = element.querySelector(`.${panelClass}`);
@@ -255,6 +255,10 @@
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             panel.style.height = calcHeight ? `${height}px` : 'auto';
+
+            if (!parseFloat(getComputedStyle(panel)[isWebkit('transitionDuration')])) {
+              onOpen(element);
+            }
           });
         });
 
@@ -267,7 +271,7 @@
        * @param {boolean} calcHeight = calculate the height of the panel
        */
       closeElement(element, calcHeight = true) {
-        const { panelClass, activeClass, beforeClose } = this.options;
+        const { panelClass, activeClass, beforeClose, onClose } = this.options;
         const panel = element.querySelector(`.${panelClass}`);
         const height = panel.scrollHeight;
 
@@ -282,6 +286,10 @@
 
             requestAnimationFrame(() => {
               panel.style.height = 0;
+
+              if (!parseFloat(getComputedStyle(panel)[isWebkit('transitionDuration')])) {
+                onClose(element);
+              }
             });
           });
         } else {
