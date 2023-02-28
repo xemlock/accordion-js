@@ -7,6 +7,7 @@
  * Published under MIT License
  */
 
+'use strict';
 (function (window) {
   'use strict';
 
@@ -78,7 +79,7 @@
 
         var allElements = onlyChildNodes
           ? this.container.childNodes
-          : this.container.querySelectorAll('.'.concat(elementClass));
+          : this.container.querySelectorAll('.'.concat(CSS.escape(elementClass)));
 
         this.elements = Array.from(allElements).filter(function (el) {
           return el.classList && el.classList.contains(elementClass);
@@ -116,7 +117,7 @@
         var _this$options2 = this.options,
           duration = _this$options2.duration,
           panelClass = _this$options2.panelClass;
-        var panel = element.querySelector('.'.concat(panelClass));
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
         var transition = isWebkit('transitionDuration');
 
         panel.style[transition] = clear ? null : ''.concat(duration, 'ms');
@@ -130,12 +131,12 @@
         var _this$options3 = this.options,
           triggerClass = _this$options3.triggerClass,
           panelClass = _this$options3.panelClass;
-        var trigger = element.querySelector('.'.concat(triggerClass));
-        var panel = element.querySelector('.'.concat(panelClass));
+        var trigger = element.querySelector('.'.concat(CSS.escape(triggerClass)));
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
 
-        element.setAttribute('id', 'ac-'.concat(uniqueId));
-        trigger.setAttribute('id', 'ac-trigger-'.concat(uniqueId));
-        panel.setAttribute('id', 'ac-panel-'.concat(uniqueId));
+        element.setAttribute('id', element.getAttribute('id') || 'ac-'.concat(uniqueId));
+        trigger.setAttribute('id', trigger.getAttribute('id') || 'ac-trigger-'.concat(uniqueId));
+        panel.setAttribute('id', panel.getAttribute('id') || 'ac-panel-'.concat(uniqueId));
       },
 
       /**
@@ -146,12 +147,18 @@
         var _this$options4 = this.options,
           triggerClass = _this$options4.triggerClass,
           panelClass = _this$options4.panelClass;
-        var trigger = element.querySelector('.'.concat(triggerClass));
-        var panel = element.querySelector('.'.concat(panelClass));
+        var trigger = element.querySelector('.'.concat(CSS.escape(triggerClass)));
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
 
-        element.removeAttribute('id');
-        trigger.removeAttribute('id');
-        panel.removeAttribute('id');
+        if (element.id.slice(0, 3) === 'ac-') {
+          element.removeAttribute('id');
+        }
+        if (trigger.id.slice(0, 3) === 'ac-') {
+          trigger.removeAttribute('id');
+        }
+        if (panel.id.slice(0, 3) === 'ac-') {
+          panel.removeAttribute('id');
+        }
       },
 
       /**
@@ -165,16 +172,16 @@
           panelClass = _this$options5.panelClass;
         if (!ariaEnabled) return;
 
-        var trigger = element.querySelector('.'.concat(triggerClass));
-        var panel = element.querySelector('.'.concat(panelClass));
+        var trigger = element.querySelector('.'.concat(CSS.escape(triggerClass)));
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
 
         trigger.setAttribute('role', 'button');
-        trigger.setAttribute('aria-controls', 'ac-panel-'.concat(uniqueId));
+        trigger.setAttribute('aria-controls', panel.id);
         trigger.setAttribute('aria-disabled', false);
         trigger.setAttribute('aria-expanded', false);
 
         panel.setAttribute('role', 'region');
-        panel.setAttribute('aria-labelledby', 'ac-trigger-'.concat(uniqueId));
+        panel.setAttribute('aria-labelledby', trigger.id);
       },
 
       /**
@@ -192,7 +199,7 @@
           triggerClass = _this$options6.triggerClass;
         if (!ariaEnabled) return;
 
-        var trigger = element.querySelector('.'.concat(triggerClass));
+        var trigger = element.querySelector('.'.concat(CSS.escape(triggerClass)));
         trigger.setAttribute('aria-expanded', ariaExpanded);
         trigger.setAttribute('aria-disabled', ariaDisabled);
       },
@@ -208,8 +215,8 @@
           panelClass = _this$options7.panelClass;
         if (!ariaEnabled) return;
 
-        var trigger = element.querySelector('.'.concat(triggerClass));
-        var panel = element.querySelector('.'.concat(panelClass));
+        var trigger = element.querySelector('.'.concat(CSS.escape(triggerClass)));
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
 
         trigger.removeAttribute('role');
         trigger.removeAttribute('aria-controls');
@@ -229,7 +236,7 @@
         e.preventDefault();
 
         var triggerClass = this.options.triggerClass;
-        var trigger = element.querySelector('.'.concat(triggerClass));
+        var trigger = element.querySelector('.'.concat(CSS.escape(triggerClass)));
         trigger.focus();
       },
 
@@ -286,10 +293,11 @@
           panelClass = _this$options8.panelClass,
           activeClass = _this$options8.activeClass,
           collapse = _this$options8.collapse,
-          beforeOpen = _this$options8.beforeOpen;
+          beforeOpen = _this$options8.beforeOpen,
+          onOpen = _this$options8.onOpen;
         if (calcHeight) beforeOpen(element);
 
-        var panel = element.querySelector('.'.concat(panelClass));
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
         var height = panel.scrollHeight;
 
         element.classList.add(activeClass);
@@ -297,6 +305,10 @@
         requestAnimationFrame(function () {
           requestAnimationFrame(function () {
             panel.style.height = calcHeight ? ''.concat(height, 'px') : 'auto';
+
+            if (!parseFloat(getComputedStyle(panel)[isWebkit('transitionDuration')])) {
+              onOpen(element);
+            }
           });
         });
 
@@ -313,8 +325,9 @@
         var _this$options9 = this.options,
           panelClass = _this$options9.panelClass,
           activeClass = _this$options9.activeClass,
-          beforeClose = _this$options9.beforeClose;
-        var panel = element.querySelector('.'.concat(panelClass));
+          beforeClose = _this$options9.beforeClose,
+          onClose = _this$options9.onClose;
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
         var height = panel.scrollHeight;
 
         element.classList.remove(activeClass);
@@ -328,6 +341,10 @@
 
             requestAnimationFrame(function () {
               panel.style.height = 0;
+
+              if (!parseFloat(getComputedStyle(panel)[isWebkit('transitionDuration')])) {
+                onClose(element);
+              }
             });
           });
         } else {
@@ -428,6 +445,7 @@
         if (e.propertyName !== 'height') return;
 
         var _this$options12 = this.options,
+          activeClass = _this$options12.activeClass,
           onOpen = _this$options12.onOpen,
           onClose = _this$options12.onClose;
         var panel = e.currentTarget;
@@ -439,7 +457,7 @@
         if (height > 0) {
           panel.style.height = 'auto';
           onOpen(element);
-        } else {
+        } else if (!element.classList.contains(activeClass)) {
           onClose(element);
         }
       },
@@ -459,8 +477,8 @@
       core.handleTransitionEnd = core.handleTransitionEnd.bind(core);
 
       core.elements.forEach(function (element) {
-        var trigger = element.querySelector('.'.concat(triggerClass));
-        var panel = element.querySelector('.'.concat(panelClass));
+        var trigger = element.querySelector('.'.concat(CSS.escape(triggerClass)));
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
 
         trigger.addEventListener('click', core.handleClick);
         trigger.addEventListener('keydown', core.handleKeydown);
@@ -481,8 +499,8 @@
         panelClass = _core$options2.panelClass;
 
       core.elements.forEach(function (element) {
-        var trigger = element.querySelector('.'.concat(triggerClass));
-        var panel = element.querySelector('.'.concat(panelClass));
+        var trigger = element.querySelector('.'.concat(CSS.escape(triggerClass)));
+        var panel = element.querySelector('.'.concat(CSS.escape(panelClass)));
 
         trigger.removeEventListener('click', core.handleClick);
         trigger.removeEventListener('keydown', core.handleKeydown);
